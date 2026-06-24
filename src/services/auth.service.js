@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/user.modal');
+const { User } = require('../models');
 
 exports.register = async (data) => {
-    const { name, email, password } = data;
+    const { name, email, password, user_role_id } = data;
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -18,7 +18,8 @@ exports.register = async (data) => {
     const user = await User.create({
         name,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        user_role_id
     })
     return user;
 }
@@ -26,7 +27,7 @@ exports.register = async (data) => {
 exports.login = async (data) => {
     const { email, password } = data
   
-    const user = await User.findOne({ where: { email } })
+    const user = await User.scope('withPassword').findOne({ where: { email } })
     if (!user) {
       const err = new Error('Invalid email or password')
       err.statusCode = 400;
@@ -47,6 +48,7 @@ exports.login = async (data) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES }
     )
-  
-    return { user, token }
+
+    const { password: _, ...safeUser } = user.get({ plain: true })
+    return { user: safeUser, token }
   }

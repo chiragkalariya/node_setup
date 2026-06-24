@@ -1,36 +1,30 @@
-const express = require('express')
-const cors = require('cors')
-const morgan = require('morgan')
 require('dotenv').config()
 
+const app = require('./src/app')
 const { connectDB } = require('./src/config/db')
 
-const app = express()
+const PORT = process.env.PORT || 5000
 
-const port = process.env.PORT || 5000
+async function startServer() {
+  try {
+    await connectDB()
 
-app.use(cors())
-app.use(express.json())
-app.use(morgan('dev'))
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+    })
 
-app.get('/', (req, res) => {
-  res.send('API is running...')
-})
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Stop the other process: lsof -i :${PORT}`)
+      } else {
+        console.error('Server error:', error.message)
+      }
+      process.exit(1)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error?.message || error)
+    process.exit(1)
+  }
+}
 
-const userRoutes = require('./src/routes/user.routes')
-app.use('/api/users', userRoutes)
-const authRoutes = require('./src/routes/auth.routes')
-app.use('/api/auth', authRoutes)
-
-// error middleware (last)
-const { errorMiddleware } = require('./src/middlewares/error.middleware')
-app.use(errorMiddleware)
-
-// Start server after attempting DB connection (server still starts if DB is unavailable).
-connectDB()
-  .catch((err) => {
-    console.error('DB connection error (server will still start):', err?.message || err)
-  })
-  .finally(() => {
-    app.listen(port, () => console.log(`Server running on port ${port}`))
-  })
+startServer()

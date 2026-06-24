@@ -3,14 +3,14 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    const now = new Date()
-    await queryInterface.bulkInsert('permissions', [
-      {
-        type: "Master",
-        name: "Add Users",
-        rights: "Users",
-      }
-    ])
+    await queryInterface.addColumn('users', 'user_role_id', {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'user_roles',
+        key: 'id',
+      },
+    });
     /**
      * Add altering commands here.
      *
@@ -20,16 +20,12 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
+    await queryInterface.removeColumn('users', 'user_role_id');
     /**
      * Add reverting commands here.
      *
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.bulkDelete('permissions', {
-      type: "Master",
-      name: "Add Users",
-      rights: "Users",
-    })
   }
 };

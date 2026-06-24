@@ -7,16 +7,14 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: 'mysql',
-    logging: false, // set true for debug
+    logging: false,
   }
 )
 
 async function connectDB() {
   try {
     await sequelize.authenticate()
-    // Ensure models are registered before syncing tables.
-    require('../models/user.modal')
-    await sequelize.sync()
+    require('../models')
     console.log('✅ Database connection successful')
   } catch (error) {
     console.error('❌ Database connection failed:', error?.message || error)
