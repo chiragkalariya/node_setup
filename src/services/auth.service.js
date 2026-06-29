@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, UserRole } = require('../models');
 
 exports.register = async (data) => {
     const { name, email, password, user_role_id } = data;
@@ -8,6 +8,13 @@ exports.register = async (data) => {
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
         const err = new Error('User already exists');
+        err.statusCode = 400;
+        throw err;
+    }
+
+    const role = await UserRole.findByPk(user_role_id);
+    if (!role) {
+        const err = new Error('User role does not exist');
         err.statusCode = 400;
         throw err;
     }

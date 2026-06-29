@@ -9,5 +9,13 @@ exports.getUserRoleById = async (id) => {
 };
 
 exports.createUserRole = async (userRole) => {
+    const existingUserRole = await UserRole.findOne({
+        where: { role_name: userRole.role_name },
+    });
+    if (existingUserRole) {
+        const error = new Error('User role already exists');
+        error.statusCode = 400;
+        throw error;
+    }
     return await UserRole.create(userRole);
 };

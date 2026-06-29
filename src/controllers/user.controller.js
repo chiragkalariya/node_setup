@@ -2,7 +2,14 @@ const userServices = require('../services/user.services');
 
 exports.getAllUsers = async (req, res, next) => {
     try {
-        const users = await userServices.getAllUsers();
+        const { name, email, user_role_name } = req.query;
+        const filters = {};
+
+        if (name) filters.name = name;
+        if (email) filters.email = email;
+        if (user_role_name) filters.user_role_name = user_role_name;
+
+        const users = await userServices.getAllUsers(filters);
         res.json(users);
     } catch (error) {
         next(error);

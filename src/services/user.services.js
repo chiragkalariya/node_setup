@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
-const { User } = require('../models');
+const { Op } = require('sequelize');
+const { User, UserRole } = require('../models');
 
 const notFoundError = () => {
     const error = new Error('User not found');
@@ -7,8 +8,29 @@ const notFoundError = () => {
     return error;
 };
 
-exports.getAllUsers = async () => {
-    return await User.findAll();
+exports.getAllUsers = async (filters = {}) => {
+    const where = {};
+
+    if (filters.name) {
+        where.name = { [Op.like]: `%${filters.name}%` };
+    }
+    if (filters.email) {
+        where.email = { [Op.like]: `%${filters.email}%` };
+    }
+    if (filters.user_role_name) {
+        const roles = await UserRole.findAll({
+            where: { role_name: { [Op.like]: `%${filters.user_role_name}%` } },
+            attributes: ['id'],
+        });
+
+        if (!roles.length) {
+            return [];
+        }
+
+        where.user_role_id = { [Op.in]: roles.map((role) => role.id) };
+    }
+
+    return await User.findAll({ where });
 };
 
 exports.getUserById = async (id) => {
@@ -28,6 +50,13 @@ exports.createUser = async (user) => {
 
     if (existingUser) {
         const error = new Error('User already exists');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const role = await UserRole.findByPk(user.user_role_id);
+    if (!role) {
+        const error = new Error('User role does not exist');
         error.statusCode = 400;
         throw error;
     }
