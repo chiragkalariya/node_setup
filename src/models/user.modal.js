@@ -23,6 +23,10 @@ const User = sequelize.define('user', {
             key: 'id',
         },
     },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
     defaultScope: {
         attributes: { exclude: ['password'] },

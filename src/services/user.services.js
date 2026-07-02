@@ -103,3 +103,20 @@ exports.deleteUser = async (id) => {
     await user.destroy();
     return { message: 'User deleted successfully' };
 };
+
+exports.purgeOldDeletedUsers = async ({ olderThanDays = 30 } = {}) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+    const deletedCount = await User.destroy({
+        where: {
+            deleted_at: {
+                [Op.ne]: null,
+                [Op.lt]: cutoffDate,
+            },
+        },
+        force: true,
+    });
+
+    return { deletedCount };
+};
